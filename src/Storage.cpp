@@ -115,11 +115,13 @@ bool Storage::readFromFile() {
         t_meet.push_back(meeting.substr(start + 1, meeting.length() - start - 2));
         std::vector<std::string> parts;
         std::string p = t_meet[1];
+        // std::cout << t_meet[1];
         int start_p = 0, end_p = 0;
         for (int i = 0; i < p.length(); i++) {
             if (p[i] == '&') {
                 end_p = i;
                 parts.push_back(p.substr(start_p, end_p - start_p));
+                // std::cout << p.substr(start_p, end_p - start_p) << std::endl;
                 start_p = i + 1;
             }
         }
@@ -130,6 +132,10 @@ bool Storage::readFromFile() {
         // std::cout << t_meet[3] << std::endl;
         // std::cout << t_meet[4] << std::endl;
         parts.push_back(p.substr(start_p, p.length() - start_p));
+
+        // for (auto i = parts.begin(); i != parts.end(); i++) {
+        //     std::cout << *i << std::endl;
+        // }
         // std::cout << parts[1] << std::endl;
         // std::cout << t_meet[4] << std::endl;
         // std::cout << 3 << std::endl;

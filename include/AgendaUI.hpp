@@ -102,6 +102,21 @@ class AgendaUI {
      * show the meetings in the screen
      */
     void printMeetings(std::list<Meeting> t_meetings);
+
+    /**
+     * add meeting participator
+     */
+    void addMeetingParticipator();
+
+    /**
+     * remove meeting participator
+     */
+    void removeMeetingParticipator();
+
+    /**
+     * request to quit meeting
+     */
+    void requestToQuitMeeting();
     // dates
     std::string m_userName;
     std::string m_userPassword;
