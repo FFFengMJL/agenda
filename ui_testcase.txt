@@ -1,0 +1,179 @@
+// 注册成功
+r
+empty 123 eee eee
+
+// 登录失败
+l
+empty 1234
+
+// 登录成功
+l
+empty 123
+
+// 列出user (只有自己一个)
+lu
+
+// 登出
+o
+
+// 注册4个测试账号
+r
+test1 123 test1 test1
+
+r
+test2 123 test2 test2
+
+r
+test3 123 test3 test3
+
+r
+test4 123 test4 test4
+
+// 登录empty，创建两个测试会议
+l
+empty 123
+
+cm
+3
+test1
+test2
+test3
+meeting1 2000-01-01/00:00 2000-01-01/00:30
+
+cm
+2
+test3
+test4
+meeting2 2000-01-02/00:00 2000-01-02/00:30
+
+// 测试不能创建会议的情况
+// 标题冲突
+cm
+1
+test4
+meeting1 2000-01-01/00:31 2000-01-01/01:00
+
+// sponsor时间冲突1
+cm
+1
+test4
+meeting3 2000-01-01/00:15 2000-01-01/00:45
+
+// sponsor时间冲突2
+cm
+1
+test4
+meeting3 1999-12-31/23:59 2000-01-01/00:01
+
+// 测试sponsor临界时间创建(创建成功)
+cm
+1
+test4
+meeting3 2000-01-01/00:30 2000-01-01/01:00
+
+// 换成test4账号，继续测试cm
+o
+
+l
+test4 123
+
+// 测试participator临界时间创建(创建成功)
+cm
+2
+empty
+test1
+meeting4 1999-12-31/23:30 2000-01-01/00:00
+
+// 测试participator时间冲突
+cm
+1
+test1
+meeting5 2000-01-01/00:15 2000-01-01/00:25 
+
+// 测试添加会议成员(amp)
+// 不能添加的情况
+// 不是会议sponsor
+amp
+meeting1 test4
+
+// 会议不存在
+amp
+meeting5 test1
+
+// 用户不存在
+amp
+meeting4 test5
+
+// 将test2添加入meeting4(成功)
+amp
+meeting4 test2
+
+// 可用 las 查看是否真正成功
+
+// 测试移除会议成员(rmp)
+// 不能添加的情况，可以参考上面
+
+// 将test1从meeting4中移除
+rmp
+meeting4 test1
+
+// 测试退出会议
+// 会议不存在/不是自己参加的会议
+rqm
+meeting1
+
+// 退出meeting3 (将导致meeting3删除)
+rqm
+meeting3
+
+// 测试 list meeting 类指令
+// 应该有 meeting2, meeting4
+la
+
+// 应该有 meeting4
+las
+
+// 应该有 meeting2
+lap
+
+// 测试 query meeting 类指令
+// 查到meeting2
+qm
+meeting2
+
+// 查到meeting4
+qt
+2000-01-01/00:00 2000-01-01/00:05
+
+// 换成登录empty账号
+o
+
+l
+empty 123
+
+// 列出会议
+// 有meeting1, meeting2, meeting4
+la
+
+// 测试删除会议
+// 删除自己非sponsor会议(失败)
+dm
+meeting4
+
+// 删除自己为sponsor会议(成功)
+dm
+meeting1
+
+// 此时只有 meeting2, meeting4
+
+// 测试删除所有会议
+da
+
+// 此时只有 meeting4
+
+// 测试删除账号(将退出到登录前)
+dc
+
+// 测试是否删除成功
+l
+empty 123
