@@ -131,33 +131,24 @@ bool AgendaService::createMeeting(const std::string &userName, const std::string
 bool AgendaService::addMeetingParticipator(const std::string &userName,
                             const std::string &title,
                             const std::string &participator) {
+    if (title.length() == 0 || userName.length() == 0 || participator.length() == 0) return false;
     // participator must be register
     auto index = [participator] (const User &user) {
         return participator == user.getName();
     };
     if (m_storage->queryUser(index).size() == 0) return false;
 
-    // 找到目标会议，并且该会议不能包含即将添加的参与者
-    auto filter2 = [userName, title, participator] (const Meeting meeting) {
-        return meeting.getSponsor() == userName && 
-               meeting.getTitle() == title && 
-              !meeting.isParticipator(participator);
+    // target meeting
+    auto filter2 = [userName, title, participator] (const Meeting &meeting) {
+        return meeting.getSponsor() == userName &&
+                meeting.getTitle() == title &&
+                !meeting.isParticipator(participator);
     };
     std::list<Meeting> tar = m_storage->queryMeeting(filter2);
-    if (tar.size() == 0)return false;
+    if (tar.size() == 0) return false;
     Date start = tar.begin()->getStartDate();
     Date end = tar.begin()->getEndDate();
 
-    // 寻找即将参与者 已经参与的 会议中是否和目标会议有时间冲突
-    // auto filter = [start, end, participator, title] (const Meeting meeting) {
-    //     if (title != meeting.getTitle() && // 非目标会议
-    //         (meeting.getSponsor() == participator || meeting.isParticipator(participator)) && 
-    //         // part在此会议中
-    //         !(meeting.getStartDate() >= end || meeting.getEndDate() <= start)) // 时间冲突
-    //         return true;
-    //     return false;
-    // };
-    // if (m_storage->queryMeeting(filter).size() != 0) return false;
     tar = listAllMeetings(participator);
     for (auto i = tar.begin(); i != tar.end(); i++) {
         if (!(i->getEndDate() <= start || i->getStartDate() >= end)) return false;
@@ -174,6 +165,7 @@ bool AgendaService::addMeetingParticipator(const std::string &userName,
 bool AgendaService::removeMeetingParticipator(const std::string &userName,
                                               const std::string &title,
                                               const std::string &participator) {
+    if (title.length() == 0 || userName.length() == 0 || participator.length() == 0) return false;
     auto filter = [userName, title, participator](const Meeting &meeting) {
         if (meeting.getSponsor() == userName && 
             meeting.getTitle() == title &&
@@ -186,7 +178,12 @@ bool AgendaService::removeMeetingParticipator(const std::string &userName,
         meeting.removeParticipator(participator);
     };
 
+    auto index = [] (const Meeting meeting) {
+        return meeting.getParticipator().size() == 0;
+    };
+
     if (m_storage->updateMeeting(filter, switcher) == 0) return false;
+    m_storage->deleteMeeting(index);
     return true;
     // return m_storage->sync();
 }
@@ -196,7 +193,7 @@ bool AgendaService::quitMeeting(const std::string &userName, const std::string &
         return meeting.getTitle() == title && 
             meeting.isParticipator(userName) &&
             meeting.getSponsor() != userName;
-            // if parts in meeting, delete it
+        // if parts in meeting, delete it
     };
 
     auto switcher = [userName](Meeting &meeting) {
@@ -205,7 +202,7 @@ bool AgendaService::quitMeeting(const std::string &userName, const std::string &
 
     if (m_storage->updateMeeting(filter, switcher) == 0) return false;
 
-    //删除没有参与者的会议
+    // del meeting which has no parts
     auto filter1 = [userName] (const Meeting &meeting) {
         return meeting.getParticipator().size() == 0;
     };
@@ -217,8 +214,7 @@ bool AgendaService::quitMeeting(const std::string &userName, const std::string &
 std::list<Meeting> AgendaService::meetingQuery(const std::string &userName,
                                                const std::string &title) const {
     auto filter = [userName, title](const Meeting &meeting) {
-        if ((meeting.getSponsor() == userName || 
-            meeting.isParticipator(userName)) && 
+        if ((meeting.getSponsor() == userName || meeting.isParticipator(userName))&& 
             meeting.getTitle() == title) 
             return true; 
         return false;
@@ -236,9 +232,8 @@ std::list<Meeting> AgendaService::meetingQuery(const std::string &userName,
     // startDate and endDate are not valid
     if (!Date::isValid(start) || !Date::isValid(end)) return k;
     auto filter = [userName, start, end] (const Meeting &meeting) {
-        return ((meeting.getSponsor() == userName || 
-                meeting.isParticipator(userName)) && 
-                !(meeting.getStartDate() > end || meeting.getEndDate() < start));
+        return (meeting.getSponsor() == userName || meeting.isParticipator(userName)) && 
+            !(meeting.getEndDate() < start || meeting.getStartDate() > end);
     };
 
     return m_storage->queryMeeting(filter);
